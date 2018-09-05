@@ -1,0 +1,15 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: cio-default
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: com.storidge.csi.cio
+parameters:
+  level: "2"
+  provision: "thin"
+  iopsMin: "10"
+  iopsMax: "1000000"
+  type: "ssd"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
