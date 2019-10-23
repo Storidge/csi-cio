@@ -1,0 +1,74 @@
+###################################################
+#      Documented Template CIO Storage Class      #
+###################################################
+# This file is intended to serve as an annotated  #
+# starting point for developers to copy and edit. #
+# A clean version is also available.              #
+###################################################
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: cio-sample
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: csi.cio.storidge.com
+
+# For convenience, the parameters and behaviors map mostly directly to the command line
+# arguments for a `cio volume create` command. Of important note are the following rules:
+# 1. Profile settings will take place first, and then get overridden by the command line arguments
+# 2. Bandwidth/IOPS constraints cannot both be specified. The volume will not be created if both are specified.
+# 3. The following parameters will have no effect: help, quiet, label, volume
+# 4. The following flags should only be used by experienced users: node/nodeid, local, directory
+# 5. Rules 2-4 apply to profiles as well, because profile arguments are also mapped directly for convenience.
+# 6. Volume name (--volume) is handled separately, through the Container Orchestrator
+# For a more detailed list of arguments, constraints, and more, please refer to:
+# https://docs.storidge.com/cio_cli/volume.html#cio-volume-create
+parameters:
+  bandwidthMin: "1"
+  bandwidthMax: "1000000"
+# Capacity is size in gigabytes
+  capacity: "20"
+# Directory should generally be handled by Container Orchestrator
+#  directory: "/host/bind/mount/path"
+# Having both bandwidth and iops makes this file invalid. Use one or the other
+#  iopsMin: "30"
+#  iopsMax: "1000000"
+# Level can either be 2 or 3, with the number indicating the number of redundant copies
+  level: "2"
+  provision: "thin"
+  type: "ssd"
+
+# AUTOEXPAND SETTINGS
+# Autoexpand can be yes or no
+#  autoexpand: "yes"
+# Increment is the percent size that the volume should grow each time.
+#  increment: "10"
+# Limit is the number of times a volume will be allowed to auto expand.
+#  limit: "10"
+# Threshold is the percentage of capacity used to trigger auto expansion
+#  threshold: "80"
+
+# COMPRESSION SETTINGS
+# Compression can be yes or no
+#  compression: "yes"
+# Algorithms supported are lzo, zlib, and zstd
+#  algorithm: "lzo"
+
+# SNAPSHOT SETTINGS
+# NOTE: This is for AUTOMATIC snapshotting. Manual snapshots can be taken with
+# supporting container orchestrators.
+# Snapshot can be yes or no
+#  snapshot: "yes"
+# Interval is the number of minutes between snapshots
+#  interval: 60
+# SnapshotMax is the maximum number of snapshots before rotating
+#  snapshotMax: 24
+
+# reclaimPolicy can be Delete (default if none is set) or Retain.
+reclaimPolicy: Retain
+
+# CIO supports volume expansion by default. This setting is NOT equivalent to
+# enabling the related AUTOMATIC volume expansion feature.
+# We recommend leaving this setting alone.
+allowVolumeExpansion: true
