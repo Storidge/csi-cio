@@ -84,7 +84,7 @@ The latest version is `v1.1.0`
 Simply run:
 
 ```
-kubectl create -f https://github.com/Storidge/csi-cio/blob/master/deploy/releases/csi-cio-v1.1.0.yaml
+kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.1.0.yaml
 ```
 
 This will start the CSI Driver on your cluster.
