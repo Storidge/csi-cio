@@ -2,7 +2,7 @@
 
 This CSI Driver interfaces a Container Orchestrator (CO), such as Kubernetes or Docker EE, to a Storidge cluster. With this driver you can dynamically provision persistent volumes from a storage abstraction layer managed by the Storidge CIO software.
 
-The [Storidge CSI](https://hub.docker.com/_/storidge-csi-driver) driver is mostly tested on Kubernetes but should also work on other CSI based CO. Feel free to test it on other CO and give us feedback.
+The [Storidge CSI driver](https://hub.docker.com/_/storidge-csi-driver) is mostly tested on Kubernetes but should also work on other CSI based CO. Feel free to test it on other CO and give us feedback.
 
 ## Storidge CIO Overview
 
