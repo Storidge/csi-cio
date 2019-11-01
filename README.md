@@ -19,9 +19,9 @@ Storidge CIO is purpose built to solve application data management challenges in
 
 | CSI Driver | Kubernetes  | Description                                                           |
 | -----------|:------------|:----------------------------------------------------------------------|
-| 1.1.0      | 1.15+       | Supports Kubernetes 1.15+. Removes deprecated items in 1.16           |
+| 1.2.0      | 1.16+       | Supports Kubernetes 1.16+                                             |
+| 1.1.0      | 1.15-       | Supports Kubernetes 1.15-. Removes deprecated items in 1.16           |
 | 1.0.0      | 1.13 - 1.15 | GA release for Kubernetes 1.13-1.15                                   |
-| 0.1.0      | 1.11 - 1.12 | Beta release for Kubernetes 1.11-1.15. Requires use of feature gates  |
 
 ## Prerequisites
 
@@ -40,11 +40,190 @@ Storidge CIO is purpose built to solve application data management challenges in
 
 The following command deploys the CSI driver with the related volume attachment, driver registration, and provisioning sidecars:
 ```
+Kubernetes 1.16+
+kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.2.0.yaml
+
+Kubernetes 1.15-
 kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.1.0.yaml
+
+
 ```
 
 ## Examples
 
+### Create a CIO StorageClass
+
+```
+# cat cio-sc-nginx.yaml
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: cio-nginx
+provisioner: csi.cio.storidge.com
+parameters:
+  profile: NGINX
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+
+# kubectl create -f cio-sc-nginx.yaml
+storageclass.storage.k8s.io/cio-nginx created
+
+```
+
+Verify that the storage class was created:
+
+```
+# kubectl get sc
+NAME                    PROVISIONER            AGE
+cio-default (default)   csi.cio.storidge.com   56m
+cio-nginx               csi.cio.storidge.com   5s
+```
+
+### Create RWO PersistentVolumeClaim
+
+```
+# cat nginx-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: cio-nginx
+
+# kubectl create -f nginx-pvc.yaml
+persistentvolumeclaim/nginx-pvc created
+
+```
+
+Validate pvc creation:
+
+```
+# kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+nginx-pvc   Bound    pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb   1Gi        RWO            cio-nginx      1m46s
+
+
+# kubectl describe pvc
+Name:          nginx-pvc
+Namespace:     default
+StorageClass:  cio-nginx
+Status:        Bound
+Volume:        pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
+Labels:        <none>
+Annotations:   kubectl.kubernetes.io/last-applied-configuration:
+                 {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"name":"nginx-pvc","namespace":"default"},"spec":{"accessMo...
+               pv.kubernetes.io/bind-completed: yes
+               pv.kubernetes.io/bound-by-controller: yes
+               volume.beta.kubernetes.io/storage-provisioner: csi.cio.storidge.com
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      1Gi
+Access Modes:  RWO
+VolumeMode:    Filesystem
+Mounted By:    <none>
+Events:
+  Type     Reason                 Age    From                                                                Message
+  ----     ------                 ----   ----                                                                -------
+  Normal   ExternalProvisioning   2m57s  persistentvolume-controller                                         waiting for a volume to be created, either by external provisioner "csi.cio.storidge.com" or manually created by system administrator
+  Normal   Provisioning           2m57s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  External provisioner is provisioning volume for claim "default/nginx-pvc"
+  Normal   ProvisioningSucceeded  2m55s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  Successfully provisioned volume pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
+
+```
+
+Verify details:
+
+```
+# kubectl describe pv
+Name:            pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
+Labels:          <none>
+Annotations:     pv.kubernetes.io/provisioned-by: csi.cio.storidge.com
+Finalizers:      [kubernetes.io/pv-protection]
+StorageClass:    cio-nginx
+Status:          Bound
+Claim:           default/nginx-pvc
+Reclaim Policy:  Delete
+Access Modes:    RWO
+VolumeMode:      Filesystem
+Capacity:        1Gi
+Node Affinity:   <none>
+Message:
+Source:
+    Type:              CSI (a Container Storage Interface (CSI) volume source)
+    Driver:            csi.cio.storidge.com
+    VolumeHandle:      pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
+    ReadOnly:          false
+    VolumeAttributes:      storage.kubernetes.io/csiProvisionerIdentity=1572577954725-8081-csi.cio.storidge.com
+Events:                <none>
+
+```
+
+### Create a pod with pvc claim
+
+```
+# cat nginx-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    name: frontend
+spec:
+  containers:
+   - name: nginx-server
+     image: nginx
+     ports:
+       - containerPort: 80
+         name: "http-server"
+     volumeMounts:
+       - name: nginx-vol
+         mountPath: /usr/share/nginx/html
+  volumes:
+   - name: nginx-vol
+     persistentVolumeClaim:
+       claimName: nginx-pvc
+       readOnly: false
+```
+
+```
+# kubectl create -f nginx-pod.yaml
+pod/nginx created
+```
+
+Validate app (pvc claim)
+
+```
+# kubectl get pods
+NAME        READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          38s
+```
+
+Login into app and validate mount point
+
+```
+# kubectl exec -it nginx /bin/bash
+
+root@nginx:/# mount | grep nginx
+/dev/vdisk/vd1 on /usr/share/nginx/html type xfs (rw,relatime,attr2,inode64,noquota)
+
+root@nginx:/# exit
+exit
+```
+
+Delete pod and pvc
+
+```
+# kubectl delete pod nginx
+pod "nginx" deleted
+
+
+# kubectl delete pvc nginx-pvc
+persistentvolumeclaim "nginx-pvc" deleted
+```
 
 ## Resources
 
