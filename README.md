@@ -39,14 +39,15 @@ Storidge CIO is purpose built to solve application data management challenges in
 ### 3. Deploy CSI Driver
 
 The following command deploys the CSI driver with the related volume attachment, driver registration, and provisioning sidecars:
+
+**Kubernetes 1.16**
 ```
-Kubernetes 1.16+
 kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.2.0.yaml
+```
 
-Kubernetes 1.15-
+**Kubernetes 1.15 and below**
+```
 kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.1.0.yaml
-
-
 ```
 
 ## Examples
@@ -67,11 +68,9 @@ allowVolumeExpansion: true
 
 # kubectl create -f cio-sc-nginx.yaml
 storageclass.storage.k8s.io/cio-nginx created
-
 ```
 
-Verify that the storage class was created:
-
+Verify that the storage class was created
 ```
 # kubectl get sc
 NAME                    PROVISIONER            AGE
@@ -98,11 +97,9 @@ spec:
 
 # kubectl create -f nginx-pvc.yaml
 persistentvolumeclaim/nginx-pvc created
-
 ```
 
-Validate pvc creation:
-
+Validate pvc creation
 ```
 # kubectl get pvc
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
@@ -132,11 +129,9 @@ Events:
   Normal   ExternalProvisioning   2m57s  persistentvolume-controller                                         waiting for a volume to be created, either by external provisioner "csi.cio.storidge.com" or manually created by system administrator
   Normal   Provisioning           2m57s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  External provisioner is provisioning volume for claim "default/nginx-pvc"
   Normal   ProvisioningSucceeded  2m55s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  Successfully provisioned volume pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
-
 ```
 
-Verify details:
-
+Verify details
 ```
 # kubectl describe pv
 Name:            pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
@@ -159,10 +154,9 @@ Source:
     ReadOnly:          false
     VolumeAttributes:      storage.kubernetes.io/csiProvisionerIdentity=1572577954725-8081-csi.cio.storidge.com
 Events:                <none>
-
 ```
 
-### Create a pod with pvc claim
+### Create a pod with pvc
 
 ```
 # cat nginx-pod.yaml
@@ -195,7 +189,6 @@ pod/nginx created
 ```
 
 Validate app (pvc claim)
-
 ```
 # kubectl get pods
 NAME        READY   STATUS    RESTARTS   AGE
@@ -203,7 +196,6 @@ nginx   1/1     Running   0          38s
 ```
 
 Login into app and validate mount point
-
 ```
 # kubectl exec -it nginx /bin/bash
 
@@ -215,11 +207,9 @@ exit
 ```
 
 Delete pod and pvc
-
 ```
 # kubectl delete pod nginx
 pod "nginx" deleted
-
 
 # kubectl delete pvc nginx-pvc
 persistentvolumeclaim "nginx-pvc" deleted
