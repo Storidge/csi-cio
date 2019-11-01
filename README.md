@@ -26,19 +26,19 @@ Storidge CIO is purpose built to solve application data management challenges in
 ## Prerequisites
 
 - Kubernetes v1.15+
-- [Storidge CIO cluster](https://guide.storidge.com/getting_started/install.html)
+- Storidge CIO cluster
 - `--allow-privileged` must be enabled for API server and kubelet
 - `--feature-gates=VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true` set to true for API server and kubelet
 
-## Deployment
+## Deployment Sequence
 
 ### 1. Deploy Kubernetes cluster
 
-### 2. Deploy Storidge cluster
+### 2. [Deploy Storidge cluster](https://guide.storidge.com/getting_started/install.html)
 
 ### 3. Deploy CSI Driver
 
-The following command deploys the CSI driver with the related volume attachment, driver registration, and provisioning sidecars:
+The following command deploys the Storidge CSI driver with related volume attachment, driver registration, and provisioning sidecars:
 
 **Kubernetes 1.16**
 ```
@@ -50,9 +50,9 @@ kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/depl
 kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.1.0.yaml
 ```
 
-## Examples
+## Examples - Basic
 
-### Create a CIO StorageClass
+### Create storage class with NGINX profile
 
 ```
 # cat cio-sc-nginx.yaml
@@ -70,7 +70,7 @@ allowVolumeExpansion: true
 storageclass.storage.k8s.io/cio-nginx created
 ```
 
-Verify that the storage class was created
+Verify storage class was created
 ```
 # kubectl get sc
 NAME                    PROVISIONER            AGE
@@ -78,7 +78,7 @@ cio-default (default)   csi.cio.storidge.com   56m
 cio-nginx               csi.cio.storidge.com   5s
 ```
 
-### Create RWO PersistentVolumeClaim
+### Create persistent volume claim (RWO access)
 
 ```
 # cat nginx-pvc.yaml
@@ -99,12 +99,11 @@ spec:
 persistentvolumeclaim/nginx-pvc created
 ```
 
-Validate pvc creation
+Confirm pvc creation
 ```
 # kubectl get pvc
 NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 nginx-pvc   Bound    pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb   1Gi        RWO            cio-nginx      1m46s
-
 
 # kubectl describe pvc
 Name:          nginx-pvc
@@ -131,7 +130,7 @@ Events:
   Normal   ProvisioningSucceeded  2m55s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  Successfully provisioned volume pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
 ```
 
-Verify details
+Show pv details
 ```
 # kubectl describe pv
 Name:            pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
@@ -156,7 +155,7 @@ Source:
 Events:                <none>
 ```
 
-### Create a pod with pvc
+### Create pod to consume pvc
 
 ```
 # cat nginx-pod.yaml
@@ -188,14 +187,14 @@ spec:
 pod/nginx created
 ```
 
-Validate app (pvc claim)
+Confirm pod creation
 ```
 # kubectl get pods
 NAME        READY   STATUS    RESTARTS   AGE
 nginx   1/1     Running   0          38s
 ```
 
-Login into app and validate mount point
+Login and validate mount point
 ```
 # kubectl exec -it nginx /bin/bash
 
@@ -215,7 +214,11 @@ pod "nginx" deleted
 persistentvolumeclaim "nginx-pvc" deleted
 ```
 
-## Resources
+## Examples - Snapshots
+
+## Examples - Volume expansion
+
+## Resources - NFS/shared volumes
 
 - [Documentation](https://docs.storidge.com)
 - [Get Started](https://guide.storidge.com)
