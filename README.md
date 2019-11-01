@@ -2,13 +2,13 @@
 
 This CSI Driver interfaces a Container Orchestrator (CO), such as Kubernetes or Docker EE, to a Storidge cluster. With this driver you can dynamically provision persistent volumes from a storage abstraction layer managed by the Storidge CIO software.
 
-The Storidge CSI driver is mostly tested on Kubernetes but should also work on other CSI based CO. Feel free to test it on other CO and give us feedback.
+The [Storidge CSI](https://hub.docker.com/_/storidge-csi-driver) driver is mostly tested on Kubernetes but should also work on other CSI based CO. Feel free to test it on other CO and give us feedback.
 
 ## Storidge CIO Overview
 
-Storidge ContainerIO (CIO) is a fully automated, unique software stack that runs on virtual machines, cloud instances and bare metal hosts, with predictable performance. Just as Container Orchestrators create an abstraction layer on top of a group of hosts, Storidge CIO creates a storage abstraction layer for stateful applications to persist, share and manage data on logical resources.
+[Storidge ContainerIO](https://guide.storidge.com/what_is_cio/introduction.html#why-cio) (CIO) is a fully automated, unique software stack that runs on virtual machines, cloud instances and bare metal hosts, with predictable performance. Just as Container Orchestrators create an abstraction layer on top of a group of hosts, Storidge CIO creates a storage abstraction layer for stateful applications to persist, share and manage data on logical resources.
 
-Storidge CIO is purpose built to solve application data management challenges in new orchestrated environments. It eliminates the manual effort, inconsistencies, and tedium in trying to patch external networked storage to Container Orchestrators. Storidge CIO adds the following key capabilities to a Kubernetes cluster:
+[Storidge CIO](https://docs.storidge.com/introduction/how_it_works.html) is purpose built to solve application data management challenges in new orchestrated environments. It eliminates the manual effort, inconsistencies, and tedium in trying to patch external networked storage to Container Orchestrators. Storidge CIO adds the following key capabilities to a Kubernetes cluster:
 
 - [automatic data locality](https://docs.storidge.com/introduction/how_it_works.html#automatic-data-locality)
 - [data redundancy with network RAID](https://docs.storidge.com/introduction/how_it_works.html#data-redundancy)
@@ -52,7 +52,7 @@ kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/depl
 
 ## Examples - Basic
 
-### Create storage class with NGINX profile
+### Create [storage class](https://docs.storidge.com/kubernetes_storage/storage_classes.html) with NGINX [profile](https://docs.storidge.com/cio_cli/profile.html#cio-profile-create)
 
 ```
 # cat cio-sc-nginx.yaml
@@ -218,7 +218,9 @@ persistentvolumeclaim "nginx-pvc" deleted
 
 ## Examples - Volume expansion
 
-## Resources - NFS/shared volumes
+## Examples - NFS/shared volumes
+
+## Resources
 
 - [Documentation](https://docs.storidge.com)
 - [Get Started](https://guide.storidge.com)
