@@ -130,6 +130,33 @@ Events:
   Normal   ProvisioningSucceeded  2m55s  csi.cio.storidge.com_kworker1_2097513b-de84-4edb-80f7-2c75277ecdf3  Successfully provisioned volume pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb
 ```
 
+Resize pvc
+```
+# nano nginx-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: cio-nginx
+
+# kubectl apply -f nginx-pvc.yaml
+persistentvolumeclaim/nginx-pvc configured
+```
+
+Confirm pvc resize
+```
+# kubectl get pvc
+NAME        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+nginx-pvc   Bound    pvc-bf1a3b06-30b2-4f6d-b0d6-45f3e11d9aeb   5Gi        RWO            cio-nginx      2m02s
+```
+
 Show pv details
 ```
 # kubectl describe pv

@@ -1,0 +1,322 @@
+# Copyright 2019 Storidge
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This is a configuration file to deploy Storidge's CSI plugin for
+# its CIO software (https://github.com/storidge/csi-cio).
+
+
+# This is the deploy file that will interface with Kubernetes Volume API v1 (1.13+)
+# Usage: kubectl create -f driver-csi-cio.yaml
+# Verify CSIDriver object enabled with:
+#     kubectl get csidrivers.csi.storage.k8s.io
+
+
+#################################
+#   CSI Driver Object (1.13+)   #
+#################################
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
+metadata:
+  name: csi.cio.storidge.com # Switch to Forward DNS in 1.16
+spec:
+  attachRequired: true
+  podInfoOnMount: true
+  volumeLifecycleModes:
+  - Persistent
+
+#############################
+#   Default Storage Class   #
+#############################
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: cio-default
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: csi.cio.storidge.com
+parameters:
+  level: "2"
+  provision: "thin"
+  iopsMin: "10"
+  iopsMax: "10000000"
+  type: "ssd"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+
+#########################
+#   Controller plugin   #
+#########################
+---
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: csi-cio-controller
+  namespace: kube-system
+spec:
+  serviceName: "csi-cio"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csi-cio-controller
+  template:
+    metadata:
+      labels:
+        app: csi-cio-controller
+        role: csi-cio
+    spec:
+      priorityClassName: system-cluster-critical
+      serviceAccount: csi-cio-controller-sa
+      hostNetwork: true
+      containers:
+        - name: csi-provisioner
+          image: quay.io/k8scsi/csi-provisioner:canary
+          args:
+          #  - "--provisioner=csi.cio.storidge.com"
+            - "--csi-address=$(ADDRESS)"
+            - "--v=5"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "Always"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-attacher
+          image: quay.io/k8scsi/csi-attacher:canary
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "Always"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-expander
+          image: quay.io/k8scsi/csi-resizer:v0.3.0
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: "Always"
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-cio
+          image: storidge/csi-cio:v1.2.0
+#          args :
+#            - "--endpoint=$(CSI_ENDPOINT)"
+#            - "--token=$(STORIDGE_ACCESS_TOKEN)"
+#            - "--url=$(STORIDGE_API_URL)"
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: X_CSI_DEBUG
+              value: "true"
+            - name: X_CSI_REQ_LOGGING
+              value: "true"
+            - name: X_CSI_REP_LOGGING
+              value: "true"
+#            - name: STORIDGE_API_URL
+#              value: https://storidge.com/api
+#            - name: STORIDGE_ACCESS_TOKEN
+#              valueFrom:
+#                secretKeyRef:
+#                  name: storidge
+#                  key: access-token
+          imagePullPolicy: "Always"
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+              mountPropagation: "Bidirectional"
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+
+###########################
+#   RBAC For Controller   #
+###########################
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: csi-cio-controller-sa
+  namespace: kube-system
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-provisioner-role
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["create", "delete", "get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+#  - apiGroups: ["snapshot.storage.k8s.io"]
+#    resources: ["volumesnapshots"]
+#    verbs: ["get", "list"]
+#  - apiGroups: ["snapshot.storage.k8s.io"]
+#    resources: ["volumesnapshotcontents"]
+#    verbs: ["get", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-provisioner-binding
+subjects:
+  - kind: ServiceAccount
+    name: csi-cio-controller-sa
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: csi-cio-provisioner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-attacher-role
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-attacher-binding
+subjects:
+  - kind: ServiceAccount
+    name: csi-cio-controller-sa
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: csi-cio-attacher-role
+  apiGroup: rbac.authorization.k8s.io
+#---
+#kind: ClusterRole
+#apiVersion: rbac.authorization.k8s.io/v1
+#metadata:
+#  name: csi-cio-snapshotter-role
+#rules:
+#  - apiGroups: [""]
+#    resources: ["persistentvolumes"]
+#    verbs: ["get", "list", "watch"]
+#  - apiGroups: [""]
+#    resources: ["persistentvolumeclaims"]
+#    verbs: ["get", "list", "watch"]
+#  - apiGroups: ["storage.k8s.io"]
+#    resources: ["storageclasses"]
+#    verbs: ["get", "list", "watch"]
+#  - apiGroups: [""]
+#    resources: ["events"]
+#    verbs: ["list", "watch", "create", "update", "patch"]
+#  - apiGroups: [""]
+#    resources: ["secrets"]
+#    verbs: ["get", "list"]
+#  - apiGroups: ["snapshot.storage.k8s.io"]
+#    resources: ["volumesnapshotclasses"]
+#    verbs: ["get", "list", "watch"]
+#  - apiGroups: ["snapshot.storage.k8s.io"]
+#    resources: ["volumesnapshotcontents"]
+#    verbs: ["create", "get", "list", "watch", "update", "delete"]
+#  - apiGroups: ["snapshot.storage.k8s.io"]
+#    resources: ["volumesnapshots"]
+#    verbs: ["get", "list", "watch", "update"]
+#  - apiGroups: ["apiextensions.k8s.io"]
+#    resources: ["customresourcedefinitions"]
+#    verbs: ["create", "list", "watch", "delete"]
+#---
+#kind: ClusterRoleBinding
+#apiVersion: rbac.authorization.k8s.io/v1
+#metadata:
+#  name: csi-cio-snapshotter-binding
+#subjects:
+#  - kind: ServiceAccount
+#    name: csi-cio-controller-sa
+#    namespace: kube-system
+#roleRef:
+#  kind: ClusterRole
+#  name: csi-cio-snapshotter-role
+#  apiGroup: rbac.authorization.k8s.io
+
+---
+# Resizer must be able to work with PVCs, PVs, SCs.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-expander-role
+rules:
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-cio-expander-binding
+subjects:
+  - kind: ServiceAccount
+    name: csi-cio-controller-sa
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: csi-cio-expander-role
+  apiGroup: rbac.authorization.k8s.io
