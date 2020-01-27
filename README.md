@@ -19,7 +19,7 @@ The [Storidge CSI driver](https://hub.docker.com/_/storidge-csi-driver) is mostl
 
 | CSI Driver | Kubernetes  | Description                                                           |
 | -----------|:------------|:----------------------------------------------------------------------|
-| 1.2.0      | 1.16+       | Supports Kubernetes 1.16+                                             |
+| 1.3.0      | 1.16+       | Supports Kubernetes 1.16+                                             |
 | 1.1.0      | 1.15-       | Supports Kubernetes 1.15-. Removes deprecated items in 1.16           |
 | 1.0.0      | 1.13 - 1.15 | GA release for Kubernetes 1.13-1.15                                   |
 
@@ -42,7 +42,7 @@ The following command deploys the Storidge CSI driver with related volume attach
 
 **Kubernetes 1.16**
 ```
-kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.2.0.yaml
+kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.3.0.yaml
 ```
 
 **Kubernetes 1.15 and below**
