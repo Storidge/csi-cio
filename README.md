@@ -245,7 +245,7 @@ persistentvolumeclaim "nginx-pvc" deleted
 
 ## Examples - Volume expansion
 
-###PVC [YAML File](https://docs.storidge.com/kubernetes_storage/volume_capacity_expansion.html#expand-pvc-example) Example
+### PVC [YAML File](https://docs.storidge.com/kubernetes_storage/volume_capacity_expansion.html#expand-pvc-example) Example
 
 To resize a Storidge PVC, simply edit the PVC spec and change the size, following the steps below. We'll use the example PVC spec (`pvc-test.yaml`) below to create a volume and then expand it. The StorageClass must have `allowVolumeExpansion: true`.
 
@@ -266,7 +266,7 @@ spec:
 
 ```
 
-###Steps to Expand PVC
+### Steps to Expand PVC
 
 1. Run `kubectl apply -f pvc-test.yaml` to apply the PVC spec above and create a Storidge volume of size 11GiB.
 2. To resize the volume, run `kubectl edit pvc pvc-test` and change the size in the PVC spec under resources->requests->storage to 22Gi.
@@ -279,7 +279,7 @@ volume pvc-443b9c5a-d92f-4171-a937-7362470c0f68
 
 ```
 
-###Automated Expansion
+### Automated Expansion
 
 Storidge volumes support automatic capacity expansion to minimize operator effort, and the possibility of application disruptions. This eliminates the need to edit the PVC spec to change the size of a volume.
 
