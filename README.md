@@ -28,7 +28,7 @@ The [Storidge CSI driver](https://hub.docker.com/_/storidge-csi-driver) is mostl
 - Kubernetes v1.15+
 - Storidge CIO cluster
 - `--allow-privileged` must be enabled for API server and kubelet
-- `--feature-gates=VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true` set to true for API server and kubelet
+- (Optional for Kubernetes v1.17+ if snapshot support is needed) `--feature-gates=VolumeSnapshotDataSource=true` set to true for API server and kubelet
 
 ## Deployment Sequence
 
