@@ -42,7 +42,7 @@ The following command deploys the Storidge CSI driver with related volume attach
 
 **Kubernetes 1.16**
 ```
-kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.3.0.yaml
+kubectl create -f https://raw.githubusercontent.com/Storidge/csi-cio/master/deploy/releases/csi-cio-v1.6.0.yaml
 ```
 
 **Kubernetes 1.15 and below**
