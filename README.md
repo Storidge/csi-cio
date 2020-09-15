@@ -19,6 +19,9 @@ The [Storidge CSI driver](https://hub.docker.com/_/storidge-csi-driver) is mostl
 
 | CSI Driver | Kubernetes  | Description                                                           |
 | -----------|:------------|:----------------------------------------------------------------------|
+| 1.6.0      | 1.16+       | Failover support and stability improvements                           |
+| 1.5.0      | 1.16+       | Improved snapshot support and bug fixes                               |
+| 1.4.0      | 1.16+       | Adds dependency to attacher v2.1.1 and fixed RBAC issue               |
 | 1.3.0      | 1.16+       | Supports Kubernetes 1.16+                                             |
 | 1.1.0      | 1.15-       | Supports Kubernetes 1.15-. Removes deprecated items in 1.16           |
 | 1.0.0      | 1.13 - 1.15 | GA release for Kubernetes 1.13-1.15                                   |
