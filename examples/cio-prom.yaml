@@ -6,7 +6,7 @@ metadata:
     name: cio-prom
 spec:
   ports:
-  - port: 16995
+  - port: 16990
   selector:
     app: cio-prom
 
@@ -28,9 +28,9 @@ spec:
     spec:
       hostNetwork: true
       containers:
-      - image: storidge/cio-prom:dev
+      - image: storidge/cio-prom:0.3
         name: cio-prom
         ports:
-        - containerPort: 16995
+        - containerPort: 16990
           name: cio-prom
         imagePullPolicy: Always
