@@ -26,7 +26,7 @@
 #   CSI Driver Object (1.13+)   #
 #################################
 ---
-apiVersion: storage.k8s.io/v1beta1
+apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
   name: csi.cio.storidge.com
